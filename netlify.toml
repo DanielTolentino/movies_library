@@ -1,5 +1,5 @@
 [[redirects]]
-  from = "hhttps://tubular-yeot-432f63.netlify.app/"
+  from = "https://tubular-yeot-432f63.netlify.app/"
   to = "https://api.themoviedb.org/3/search/movie/"
   status = 200
   force = true
