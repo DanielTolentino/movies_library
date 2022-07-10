@@ -1,5 +1,5 @@
 [[redirects]]
-  from = "/*"
+  from = "/search"
   to = "https://api.themoviedb.org/3/search/movie/"
   status = 200
   force = true
