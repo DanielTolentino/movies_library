@@ -1,8 +1,8 @@
 # The following redirect is intended for use with most SPAs that handle
 # routing internally.
 [[redirects]]
-  from = "https://tubular-yeot-432f63.netlify.app/"
-  to = "https://api.themoviedb.org/3/search/movie/?${apiKey}&query=${query}"
+  from = "/search(.*)"
+  to = "*"
   status = 200
 
 [[headers]]
