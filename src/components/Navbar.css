@@ -1,5 +1,7 @@
 #navbar {
     display: flex;
+    flex-direction: row;
+	flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
     padding: 1rem 2rem;
@@ -14,6 +16,9 @@
 
 #navbar form{
     display: flex;
+    flex-direction: row;
+	flex-wrap: wrap;
+	justify-content: center;
     gap: .5rem;
 }
 
