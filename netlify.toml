@@ -1,7 +1,7 @@
 # The following redirect is intended for use with most SPAs that handle
 # routing internally.
 [[redirects]]
-  from = "/search"
+  from = "/*"
   to = "https://api.themoviedb.org/3/search/movie/"
   status = 200
 
