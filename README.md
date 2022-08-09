@@ -2,6 +2,7 @@
 [Acesse aqui!](https://movies-library-mocha.vercel.app/ "Acesse aqui!")
 
 Projeto criado seguindo tutorial do canal do Matheus > [Vídeo](https://www.youtube.com/watch?v=XqxUHVVO7-U "Vídeo")
+
 Algumas das modificações que fiz:
 - Reduzi o grid para 2 (melhor visualização em todos tamanhos de telas)
 - Adicionei atributos flex para deixar o nav-bar responsivo
