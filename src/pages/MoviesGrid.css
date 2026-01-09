@@ -12,10 +12,11 @@
 .movies-container {
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
+    justify-content: flex-start;
     padding: 2rem;
     max-width: 1200px;
     margin: 0 auto;
+    gap: 1.5rem;
 }
 
 .movies-container div{
@@ -26,6 +27,27 @@
     justify-content: space-between;
     background-color: #111;
     padding: 1.5rem;
+    width: calc(25% - 1.125rem);
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
+@media (max-width: 1024px) {
+    .movies-container div {
+        width: calc(33.333% - 1rem);
+    }
+}
+
+@media (max-width: 768px) {
+    .movies-container div {
+        width: calc(50% - 0.75rem);
+    }
+}
+
+@media (max-width: 480px) {
+    .movies-container div {
+        width: 100%;
+    }
 }
 
 .movies-container div img{
