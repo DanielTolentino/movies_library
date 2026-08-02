@@ -1,6 +1,6 @@
-# Movies Library
+# CineVista
 
-Aplicação React para consultar filmes do TMDB, com listagem dos mais bem avaliados, busca e página de detalhes.
+Aplicação React para explorar filmes do TMDB, com listagem dos mais bem avaliados, busca e página de detalhes.
 
 ## Como funciona
 

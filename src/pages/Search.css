@@ -1,0 +1,23 @@
+.search-page__header {
+  max-width: 52rem;
+}
+
+.search-page__header h1 {
+  margin-top: 0.6rem;
+  font-size: clamp(2rem, 5vw, 4rem);
+  letter-spacing: -0.06em;
+}
+
+.search-page__query {
+  color: var(--color-amber);
+}
+
+.search-page__lead {
+  margin-top: 1rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.search-page__content {
+  margin-top: clamp(1.75rem, 4vw, 3rem);
+}
