@@ -1,15 +1,69 @@
 const TMDB_API_URL = "https://api.themoviedb.org/3";
 const REQUEST_TIMEOUT_MS = 8000;
 const MAX_QUERY_LENGTH = 100;
+const RATE_LIMIT_WINDOW_MS = 60000;
+const RATE_LIMIT_MAX_REQUESTS = 60;
+const SUCCESS_CACHE_CONTROL = "public, max-age=0, s-maxage=300, stale-while-revalidate=600";
 
-const json = (body, status = 200) => {
+const requestTimestampsByClient = new Map();
+
+const json = (body, status = 200, cacheControl = "no-store") => {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "no-store",
+      "Cache-Control": cacheControl,
     },
   });
+};
+
+const isSameOriginRequest = (request) => {
+  const site = request.headers.get("sec-fetch-site");
+
+  if (site && site !== "same-origin" && site !== "none") {
+    return false;
+  }
+
+  const origin = request.headers.get("origin");
+
+  if (!origin) {
+    return true;
+  }
+
+  try {
+    return new URL(origin).host === new URL(request.url).host;
+  } catch {
+    return false;
+  }
+};
+
+const isRateLimited = (request) => {
+  const client =
+    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+    request.headers.get("x-real-ip") ||
+    "unknown";
+  const now = Date.now();
+
+  for (const [key, timestamps] of requestTimestampsByClient) {
+    const recent = timestamps.filter((timestamp) => now - timestamp < RATE_LIMIT_WINDOW_MS);
+
+    if (recent.length === 0) {
+      requestTimestampsByClient.delete(key);
+    } else {
+      requestTimestampsByClient.set(key, recent);
+    }
+  }
+
+  const timestamps = requestTimestampsByClient.get(client) ?? [];
+
+  if (timestamps.length >= RATE_LIMIT_MAX_REQUESTS) {
+    return true;
+  }
+
+  timestamps.push(now);
+  requestTimestampsByClient.set(client, timestamps);
+
+  return false;
 };
 
 const getMovieEndpoint = (requestUrl) => {
@@ -44,6 +98,14 @@ const getMovieEndpoint = (requestUrl) => {
 };
 
 export async function GET(request) {
+  if (!isSameOriginRequest(request)) {
+    return json({ message: "Origem não autorizada." }, 403);
+  }
+
+  if (isRateLimited(request)) {
+    return json({ message: "Muitas requisições. Tente novamente em instantes." }, 429);
+  }
+
   const apiKey = process.env.TMDB_API_KEY?.trim();
 
   if (!apiKey) {
@@ -83,7 +145,7 @@ export async function GET(request) {
       return json({ message }, status);
     }
 
-    return json(data);
+    return json(data, 200, SUCCESS_CACHE_CONTROL);
   } catch {
     return json({ message: "Não foi possível consultar o serviço de filmes." }, 502);
   } finally {
