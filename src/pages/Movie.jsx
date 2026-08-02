@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback } from "react";
 import { useParams } from "react-router-dom";
-import { FaStar } from "react-icons/fa";
 
 import FeedbackPanel from "../components/FeedbackPanel";
 import { MoviePoster } from "../components/MovieCard";
+import MovieRating from "../components/MovieRating";
+import { useAsyncData } from "../hooks/useAsyncData";
 import { getMovieById } from "../services/movies";
+import { getMovieTitle } from "../utils/movie";
 
 import "./Movie.css";
 
@@ -12,11 +14,6 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "USD",
   maximumFractionDigits: 0,
-});
-
-const ratingFormatter = new Intl.NumberFormat("pt-BR", {
-  maximumFractionDigits: 1,
-  minimumFractionDigits: 1,
 });
 
 const formatCurrency = (value) => {
@@ -39,47 +36,19 @@ const formatDuration = (minutes) => {
 
 const Movie = () => {
   const { id } = useParams();
-  const [movie, setMovie] = useState(null);
-  const [status, setStatus] = useState("loading");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [requestVersion, setRequestVersion] = useState(0);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    let isCurrentRequest = true;
+  const fetchMovie = useCallback((signal) => getMovieById(id, signal), [id]);
 
-    setMovie(null);
-    setErrorMessage("");
-    setStatus("loading");
+  const {
+    data: movie,
+    status,
+    errorMessage,
+    retry: handleRetry,
+  } = useAsyncData(fetchMovie, [fetchMovie], {
+    errorMessage: "Não foi possível carregar o filme.",
+  });
 
-    getMovieById(id, controller.signal)
-      .then((movieData) => {
-        if (!isCurrentRequest) return;
-
-        setMovie(movieData);
-        setStatus("success");
-      })
-      .catch((error) => {
-        if (!isCurrentRequest || error?.name === "AbortError") return;
-
-        setErrorMessage(error?.message ?? "Não foi possível carregar o filme.");
-        setStatus("error");
-      });
-
-    return () => {
-      isCurrentRequest = false;
-      controller.abort();
-    };
-  }, [id, requestVersion]);
-
-  const handleRetry = () => {
-    setRequestVersion((version) => version + 1);
-  };
-
-  const title = movie?.title?.trim() || "Filme sem título";
-  const rating = Number.isFinite(movie?.vote_average)
-    ? ratingFormatter.format(movie.vote_average)
-    : "—";
+  const title = getMovieTitle(movie);
   const statusMessage = {
     loading: "Carregando detalhes do filme.",
     error: "Não foi possível carregar os detalhes do filme.",
@@ -116,11 +85,10 @@ const Movie = () => {
               <p className="eyebrow">Detalhes do filme</p>
               <h1 id="movie-title">{title}</h1>
               {movie.tagline && <p className="movie-detail__tagline">{movie.tagline}</p>}
-              <p className="movie-detail__rating" aria-label={`Avaliação ${rating} de 10`}>
-                <FaStar aria-hidden="true" />
-                <span>{rating}</span>
-                <span className="visually-hidden"> de 10</span>
-              </p>
+              <MovieRating
+                className="movie-detail__rating"
+                voteAverage={movie.vote_average}
+              />
 
               <dl className="movie-detail__facts">
                 <div className="movie-detail__fact">
