@@ -25,16 +25,32 @@ const requestMovies = async (action, params = {}, signal) => {
 
 export const getTopRatedMovies = async (signal) => {
   const data = await requestMovies("top-rated", {}, signal);
-  return Array.isArray(data?.results) ? data.results : [];
+
+  if (!Array.isArray(data?.results)) {
+    throw new Error("Não foi possível carregar os filmes.");
+  }
+
+  return data.results;
 };
 
 export const searchMovies = async (query, signal) => {
   const data = await requestMovies("search", { query }, signal);
-  return Array.isArray(data?.results) ? data.results : [];
+
+  if (!Array.isArray(data?.results)) {
+    throw new Error("Não foi possível carregar os filmes.");
+  }
+
+  return data.results;
 };
 
-export const getMovieById = (id, signal) => {
-  return requestMovies("details", { id }, signal);
+export const getMovieById = async (id, signal) => {
+  const data = await requestMovies("details", { id }, signal);
+
+  if (!data || typeof data !== "object" || Array.isArray(data) || !data.id) {
+    throw new Error("Não foi possível carregar os detalhes do filme.");
+  }
+
+  return data;
 };
 
 export const getMovieImageUrl = (posterPath) => {
