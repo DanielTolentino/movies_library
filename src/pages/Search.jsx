@@ -1,63 +1,31 @@
-import { useEffect, useState } from "react";
+import { useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import FeedbackPanel from "../components/FeedbackPanel";
 import { MovieGrid, MovieGridSkeleton } from "../components/MovieGrid";
+import { useMovieList } from "../hooks/useMovieList";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { searchMovies } from "../services/movies";
 
 import "./Search.css";
 
 const Search = () => {
   const [searchParams] = useSearchParams();
-  const [movies, setMovies] = useState([]);
-  const [status, setStatus] = useState("idle");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [requestVersion, setRequestVersion] = useState(0);
   const query = searchParams.get("q")?.trim() ?? "";
+  const fetchPage = useCallback(
+    (page, signal) => searchMovies(query, page, signal),
+    [query],
+  );
+  const { movies, status, errorMessage, hasMore, retry, loadMore } = useMovieList(
+    fetchPage,
+    { enabled: Boolean(query) },
+  );
 
-  useEffect(() => {
-    const controller = new AbortController();
-    let isCurrentRequest = true;
-
-    if (!query) {
-      setMovies([]);
-      setErrorMessage("");
-      setStatus("idle");
-      return () => {
-        isCurrentRequest = false;
-        controller.abort();
-      };
-    }
-
-    setStatus("loading");
-    setErrorMessage("");
-
-    searchMovies(query, controller.signal)
-      .then((results) => {
-        if (!isCurrentRequest) return;
-
-        setMovies(results);
-        setStatus("success");
-      })
-      .catch((error) => {
-        if (!isCurrentRequest || error?.name === "AbortError") return;
-
-        setErrorMessage(error?.message ?? "Não foi possível carregar os filmes.");
-        setStatus("error");
-      });
-
-    return () => {
-      isCurrentRequest = false;
-      controller.abort();
-    };
-  }, [query, requestVersion]);
-
-  const handleRetry = () => {
-    setRequestVersion((version) => version + 1);
-  };
+  usePageTitle(query ? `Resultados para ${query}` : "Busca");
 
   const statusMessage = {
     idle: "Digite um título para pesquisar filmes.",
     loading: `Carregando resultados para ${query}.`,
+    "loading-more": `Carregando mais resultados para ${query}.`,
     error: `Não foi possível carregar os resultados para ${query}.`,
     success:
       movies.length === 0
@@ -88,7 +56,7 @@ const Search = () => {
       <section
         className="search-page__content"
         aria-labelledby="search-results-title"
-        aria-busy={status === "loading"}
+        aria-busy={status === "loading" || status === "loading-more"}
       >
         <h2 id="search-results-title" className="visually-hidden">
           Resultados da busca
@@ -104,13 +72,13 @@ const Search = () => {
           />
         )}
         {status === "loading" && <MovieGridSkeleton />}
-        {status === "error" && (
+        {status === "error" && movies.length === 0 && (
           <FeedbackPanel
             tone="error"
             title="Não foi possível carregar os resultados"
             message={errorMessage}
             actionLabel="Tentar novamente"
-            onAction={handleRetry}
+            onAction={retry}
           />
         )}
         {status === "success" && movies.length === 0 && (
@@ -119,7 +87,29 @@ const Search = () => {
             message={`Não encontramos resultados para “${query}”. Tente outro título.`}
           />
         )}
-        {status === "success" && movies.length > 0 && <MovieGrid movies={movies} />}
+        {movies.length > 0 && <MovieGrid movies={movies} />}
+
+        {status === "error" && movies.length > 0 && (
+          <FeedbackPanel
+            tone="error"
+            title="Não foi possível carregar mais resultados"
+            message={errorMessage}
+            actionLabel="Tentar novamente"
+            onAction={retry}
+          />
+        )}
+        {(status === "success" || status === "loading-more") && hasMore && (
+          <div className="load-more">
+            <button
+              className="load-more__button"
+              type="button"
+              onClick={loadMore}
+              disabled={status === "loading-more"}
+            >
+              {status === "loading-more" ? "Carregando…" : "Carregar mais resultados"}
+            </button>
+          </div>
+        )}
       </section>
     </section>
   );

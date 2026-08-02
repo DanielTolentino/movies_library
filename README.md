@@ -8,10 +8,13 @@ Aplicação React para explorar filmes do TMDB, com listagem dos mais bem avalia
 - `/search?q=...`: pesquisa filmes pelo título.
 - `/movie/:id`: exibe os detalhes de um filme.
 
+As listagens são paginadas (`page`) e os dados são pedidos ao TMDB em `pt-BR`.
+
 O navegador consulta somente `/api/movies`. A Function da Vercel consulta o TMDB usando a variável privada `TMDB_API_KEY`, mantendo a chave fora do código enviado ao cliente.
 
 ## Desenvolvimento
 
+0. Use Node `^20.19.0 || >=22.12.0` (veja `.nvmrc`); versões anteriores falham no build com um erro de binding do rolldown.
 1. Instale as dependências com `npm install`.
 2. Crie um `.env.local` a partir de `.env.example` e informe `TMDB_API_KEY`.
 3. Execute `npm run dev:vercel` para iniciar o frontend e a Function da Vercel juntos.

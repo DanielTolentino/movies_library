@@ -14,7 +14,7 @@ export const MovieGrid = ({ movies }) => {
   );
 };
 
-export const MovieGridSkeleton = ({ count = 8 }) => {
+export const MovieGridSkeleton = ({ count = 20 }) => {
   return (
     <ul className="movie-grid" aria-hidden="true">
       {Array.from({ length: count }, (_, index) => (

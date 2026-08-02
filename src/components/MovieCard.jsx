@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FaStar } from "react-icons/fa";
 import { BiRightArrowAlt } from "react-icons/bi";
@@ -13,10 +13,17 @@ const ratingFormatter = new Intl.NumberFormat("pt-BR", {
 
 const getMovieTitle = (movie) => movie.title?.trim() || "Filme sem título";
 
+const getReleaseYear = (movie) => movie.release_date?.slice(0, 4) || null;
+
 export const MoviePoster = ({ movie, loading = "lazy", className = "" }) => {
   const imageUrl = getMovieImageUrl(movie.poster_path);
   const [failedImageUrl, setFailedImageUrl] = useState(null);
   const title = getMovieTitle(movie);
+
+  useEffect(() => {
+    setFailedImageUrl(null);
+  }, [imageUrl]);
+
   const showImage = Boolean(imageUrl) && failedImageUrl !== imageUrl;
   const posterClassName = [
     "movie-poster",
@@ -57,6 +64,7 @@ export const MoviePoster = ({ movie, loading = "lazy", className = "" }) => {
 const MovieCard = ({ movie }) => {
   const title = getMovieTitle(movie);
   const titleId = `movie-title-${movie.id}`;
+  const releaseYear = getReleaseYear(movie);
   const rating = Number.isFinite(movie.vote_average)
     ? ratingFormatter.format(movie.vote_average)
     : "—";
@@ -72,6 +80,7 @@ const MovieCard = ({ movie }) => {
             <span className="visually-hidden"> de 10</span>
           </p>
           <h3 id={titleId}>{title}</h3>
+          {releaseYear && <p className="movie-card__year">{releaseYear}</p>}
           <span className="movie-card__action">
             Ver detalhes
             <BiRightArrowAlt aria-hidden="true" />

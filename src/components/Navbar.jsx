@@ -1,14 +1,23 @@
-import { useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { BiCameraMovie, BiSearchAlt2 } from "react-icons/bi";
+
+import { MAX_QUERY_LENGTH } from "../services/movies";
 
 import "./Navbar.css";
 
 const Navbar = () => {
-  const [search, setSearch] = useState("");
+  const [searchParams] = useSearchParams();
+  const activeQuery = searchParams.get("q") ?? "";
+  const [search, setSearch] = useState(activeQuery);
   const [searchError, setSearchError] = useState("");
   const searchInputRef = useRef(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setSearch(activeQuery);
+    setSearchError("");
+  }, [activeQuery]);
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -23,7 +32,6 @@ const Navbar = () => {
 
     const params = new URLSearchParams({ q: normalizedSearch });
     navigate(`/search?${params.toString()}`);
-    setSearch("");
     setSearchError("");
   };
 
@@ -62,7 +70,7 @@ const Navbar = () => {
               name="q"
               type="search"
               placeholder="Busque um filme"
-              maxLength="100"
+              maxLength={MAX_QUERY_LENGTH}
               value={search}
               onChange={handleSearchChange}
               aria-invalid={Boolean(searchError)}

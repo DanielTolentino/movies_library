@@ -46,3 +46,10 @@
 .feedback-panel__button:hover {
   background: var(--color-amber-strong);
 }
+
+.feedback-panel__link {
+  margin-top: 0.45rem;
+  color: var(--color-amber);
+  font-weight: 800;
+  text-decoration: underline;
+}

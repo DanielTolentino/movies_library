@@ -3,11 +3,7 @@
   "framework": "vite",
   "rewrites": [
     {
-      "source": "/movie/:id",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/search",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ],

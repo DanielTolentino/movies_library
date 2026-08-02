@@ -1,6 +1,13 @@
 import "./FeedbackPanel.css";
 
-const FeedbackPanel = ({ tone = "neutral", title, message, actionLabel, onAction }) => {
+const FeedbackPanel = ({
+  tone = "neutral",
+  title,
+  message,
+  actionLabel,
+  onAction,
+  children,
+}) => {
   const isError = tone === "error";
 
   return (
@@ -16,6 +23,7 @@ const FeedbackPanel = ({ tone = "neutral", title, message, actionLabel, onAction
           {actionLabel}
         </button>
       )}
+      {children}
     </div>
   );
 };

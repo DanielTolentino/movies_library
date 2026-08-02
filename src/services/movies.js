@@ -1,6 +1,16 @@
 const API_ENDPOINT = "/api/movies";
 const IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500/";
 
+export const MAX_QUERY_LENGTH = 100;
+
+class MovieServiceError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.name = "MovieServiceError";
+    this.status = status;
+  }
+}
+
 const requestMovies = async (action, params = {}, signal) => {
   const searchParams = new URLSearchParams({ action });
 
@@ -17,37 +27,39 @@ const requestMovies = async (action, params = {}, signal) => {
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
-    throw new Error(data?.message ?? "Não foi possível carregar os filmes.");
+    throw new MovieServiceError(
+      data?.message ?? "Não foi possível carregar os filmes.",
+      response.status,
+    );
   }
 
   return data;
 };
 
-export const getTopRatedMovies = async (signal) => {
-  const data = await requestMovies("top-rated", {}, signal);
-
+const toMoviePage = (data) => {
   if (!Array.isArray(data?.results)) {
-    throw new Error("Não foi possível carregar os filmes.");
+    throw new MovieServiceError("Não foi possível carregar os filmes.");
   }
 
-  return data.results;
+  const page = Number.isFinite(data.page) ? data.page : 1;
+  const totalPages = Number.isFinite(data.total_pages) ? data.total_pages : page;
+
+  return { results: data.results, page, totalPages };
 };
 
-export const searchMovies = async (query, signal) => {
-  const data = await requestMovies("search", { query }, signal);
+export const getTopRatedMovies = async (page = 1, signal) => {
+  return toMoviePage(await requestMovies("top-rated", { page }, signal));
+};
 
-  if (!Array.isArray(data?.results)) {
-    throw new Error("Não foi possível carregar os filmes.");
-  }
-
-  return data.results;
+export const searchMovies = async (query, page = 1, signal) => {
+  return toMoviePage(await requestMovies("search", { query, page }, signal));
 };
 
 export const getMovieById = async (id, signal) => {
   const data = await requestMovies("details", { id }, signal);
 
   if (!data || typeof data !== "object" || Array.isArray(data) || !data.id) {
-    throw new Error("Não foi possível carregar os detalhes do filme.");
+    throw new MovieServiceError("Não foi possível carregar os detalhes do filme.");
   }
 
   return data;

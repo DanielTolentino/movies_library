@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
 import { FaStar } from "react-icons/fa";
+
+import { Link, useParams } from "react-router-dom";
 
 import FeedbackPanel from "../components/FeedbackPanel";
 import { MoviePoster } from "../components/MovieCard";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { getMovieById } from "../services/movies";
 
 import "./Movie.css";
@@ -42,6 +44,7 @@ const Movie = () => {
   const [movie, setMovie] = useState(null);
   const [status, setStatus] = useState("loading");
   const [errorMessage, setErrorMessage] = useState("");
+  const [isMissing, setIsMissing] = useState(false);
   const [requestVersion, setRequestVersion] = useState(0);
 
   useEffect(() => {
@@ -50,6 +53,7 @@ const Movie = () => {
 
     setMovie(null);
     setErrorMessage("");
+    setIsMissing(false);
     setStatus("loading");
 
     getMovieById(id, controller.signal)
@@ -63,6 +67,7 @@ const Movie = () => {
         if (!isCurrentRequest || error?.name === "AbortError") return;
 
         setErrorMessage(error?.message ?? "Não foi possível carregar o filme.");
+        setIsMissing(error?.status === 404 || error?.status === 400);
         setStatus("error");
       });
 
@@ -77,6 +82,9 @@ const Movie = () => {
   };
 
   const title = movie?.title?.trim() || "Filme sem título";
+
+  usePageTitle(status === "success" ? title : "Detalhes do filme");
+
   const rating = Number.isFinite(movie?.vote_average)
     ? ratingFormatter.format(movie.vote_average)
     : "—";
@@ -98,7 +106,17 @@ const Movie = () => {
           <span>Carregando detalhes do filme…</span>
         </div>
       )}
-      {status === "error" && (
+      {status === "error" && isMissing && (
+        <FeedbackPanel
+          title="Filme não encontrado"
+          message="Não encontramos esse filme no catálogo. Ele pode ter sido removido ou o endereço está incorreto."
+        >
+          <Link className="feedback-panel__link" to="/">
+            Voltar para a página inicial
+          </Link>
+        </FeedbackPanel>
+      )}
+      {status === "error" && !isMissing && (
         <FeedbackPanel
           tone="error"
           title="Não foi possível carregar o filme"

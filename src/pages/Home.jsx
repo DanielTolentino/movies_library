@@ -1,49 +1,31 @@
-import { useEffect, useState } from "react";
+import { useCallback } from "react";
 import FeedbackPanel from "../components/FeedbackPanel";
 import { MovieGrid, MovieGridSkeleton } from "../components/MovieGrid";
+import { useMovieList } from "../hooks/useMovieList";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { getTopRatedMovies } from "../services/movies";
 
 import "./Home.css";
 
 const Home = () => {
-  const [topMovies, setTopMovies] = useState([]);
-  const [status, setStatus] = useState("loading");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [requestVersion, setRequestVersion] = useState(0);
+  const fetchPage = useCallback(
+    (page, signal) => getTopRatedMovies(page, signal),
+    [],
+  );
+  const {
+    movies: topMovies,
+    status,
+    errorMessage,
+    hasMore,
+    retry,
+    loadMore,
+  } = useMovieList(fetchPage);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    let isCurrentRequest = true;
-
-    setStatus("loading");
-    setErrorMessage("");
-
-    getTopRatedMovies(controller.signal)
-      .then((movies) => {
-        if (!isCurrentRequest) return;
-
-        setTopMovies(movies);
-        setStatus("success");
-      })
-      .catch((error) => {
-        if (!isCurrentRequest || error?.name === "AbortError") return;
-
-        setErrorMessage(error?.message ?? "Não foi possível carregar os filmes.");
-        setStatus("error");
-      });
-
-    return () => {
-      isCurrentRequest = false;
-      controller.abort();
-    };
-  }, [requestVersion]);
-
-  const handleRetry = () => {
-    setRequestVersion((version) => version + 1);
-  };
+  usePageTitle("Mais bem avaliados");
 
   const statusMessage = {
     loading: "Carregando filmes mais bem avaliados.",
+    "loading-more": "Carregando mais filmes.",
     error: "Não foi possível carregar os filmes mais bem avaliados.",
     success:
       topMovies.length === 0
@@ -64,7 +46,7 @@ const Home = () => {
       <section
         className="catalog-section"
         aria-labelledby="top-rated-title"
-        aria-busy={status === "loading"}
+        aria-busy={status === "loading" || status === "loading-more"}
       >
         <div className="section-heading">
           <div>
@@ -81,13 +63,13 @@ const Home = () => {
         </p>
 
         {status === "loading" && <MovieGridSkeleton />}
-        {status === "error" && (
+        {status === "error" && topMovies.length === 0 && (
           <FeedbackPanel
             tone="error"
             title="Não foi possível carregar os filmes"
             message={errorMessage}
             actionLabel="Tentar novamente"
-            onAction={handleRetry}
+            onAction={retry}
           />
         )}
         {status === "success" && topMovies.length === 0 && (
@@ -96,7 +78,29 @@ const Home = () => {
             message="A lista de filmes mais bem avaliados está vazia no momento."
           />
         )}
-        {status === "success" && topMovies.length > 0 && <MovieGrid movies={topMovies} />}
+        {topMovies.length > 0 && <MovieGrid movies={topMovies} />}
+
+        {status === "error" && topMovies.length > 0 && (
+          <FeedbackPanel
+            tone="error"
+            title="Não foi possível carregar mais filmes"
+            message={errorMessage}
+            actionLabel="Tentar novamente"
+            onAction={retry}
+          />
+        )}
+        {(status === "success" || status === "loading-more") && hasMore && (
+          <div className="load-more">
+            <button
+              className="load-more__button"
+              type="button"
+              onClick={loadMore}
+              disabled={status === "loading-more"}
+            >
+              {status === "loading-more" ? "Carregando…" : "Carregar mais filmes"}
+            </button>
+          </div>
+        )}
       </section>
     </section>
   );
