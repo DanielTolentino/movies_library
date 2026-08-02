@@ -18,6 +18,14 @@ O navegador consulta somente `/api/movies`. A Function da Vercel consulta o TMDB
 
 O comando `npm run dev` inicia somente o servidor Vite. Para testar o fluxo completo localmente, use `npm run dev:vercel`.
 
+## Testes
+
+Os testes usam Vitest com Testing Library e ambiente jsdom.
+
+- `npm test`: executa a suíte de testes.
+- `npm run test:watch`: executa em modo interativo.
+- `npm run test:coverage`: gera o relatório de cobertura em `coverage/`.
+
 ## Deploy na Vercel
 
 Configure `TMDB_API_KEY` nas variáveis de ambiente do projeto para os ambientes Preview e Production. A chave não deve ser adicionada ao repositório.
