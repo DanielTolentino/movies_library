@@ -1,11 +1,25 @@
 # Movies Library
-[Acesse aqui!](https://movies-library-mocha.vercel.app/ "Acesse aqui!")
 
-Projeto criado seguindo tutorial do canal do Matheus > [Vídeo](https://www.youtube.com/watch?v=XqxUHVVO7-U "Vídeo")
+Aplicação React para consultar filmes do TMDB, com listagem dos mais bem avaliados, busca e página de detalhes.
 
-Algumas das modificações que fiz:
-- Reduzi o grid para 2 (melhor visualização em todos tamanhos de telas)
-- Adicionei atributos flex para deixar o nav-bar responsivo
-- Adapta a lista para 1 card por vez em dispositivos com telas menores
+## Como funciona
 
-Achei a visualização dos cards mais interssantes, com foco nas imagens de cada filme, e botões melhores posicionados em toda a página, assim como a barra de busca.
+- `/`: mostra os filmes mais bem avaliados.
+- `/search?q=...`: pesquisa filmes pelo título.
+- `/movie/:id`: exibe os detalhes de um filme.
+
+O navegador consulta somente `/api/movies`. A Function da Vercel consulta o TMDB usando a variável privada `TMDB_API_KEY`, mantendo a chave fora do código enviado ao cliente.
+
+## Desenvolvimento
+
+1. Instale as dependências com `npm install`.
+2. Crie um `.env.local` a partir de `.env.example` e informe `TMDB_API_KEY`.
+3. Execute `npm run dev:vercel` para iniciar o frontend e a Function da Vercel juntos.
+
+O comando `npm run dev` inicia somente o servidor Vite. Para testar o fluxo completo localmente, use `npm run dev:vercel`.
+
+## Deploy na Vercel
+
+Configure `TMDB_API_KEY` nas variáveis de ambiente do projeto para os ambientes Preview e Production. A chave não deve ser adicionada ao repositório.
+
+A Vercel detecta o Vite, executa `npm run build` e publica o diretório `dist`. As regras de deep link e os headers de segurança ficam em `vercel.json`.

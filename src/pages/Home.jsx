@@ -1,38 +1,47 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import MovieCard from "../components/MovieCard";
+import { getTopRatedMovies } from "../services/movies";
 
 import "./MoviesGrid.css";
 
-const moviesURL = import.meta.env.VITE_API;
-const apiKey = import.meta.env.VITE_API_KEY;
-
 const Home = () => {
-    const [topMovies, setTopMovies] = useState([])
+  const [topMovies, setTopMovies] = useState([]);
+  const [status, setStatus] = useState("loading");
+  const [errorMessage, setErrorMessage] = useState("");
 
-    const getTopRatedMovies = async (url) => {
-        const res = await fetch(url);
-        const data = await res.json();
-        
-        setTopMovies(data.results);
-    };
+  useEffect(() => {
+    const controller = new AbortController();
 
-    useEffect(() => {
+    getTopRatedMovies(controller.signal)
+      .then((movies) => {
+        setTopMovies(movies);
+        setStatus("success");
+      })
+      .catch((error) => {
+        if (error?.name === "AbortError") return;
 
-        const topRatedUrl = `${moviesURL}top_rated?api_key=${apiKey}`;
+        setErrorMessage(error.message);
+        setStatus("error");
+      });
 
-        getTopRatedMovies(topRatedUrl);
-    }, []);
+    return () => controller.abort();
+  }, []);
 
-return (
+  return (
     <div className="container">
-        <h2 className="title">Melhores filmes:</h2>
-        <div className="movies-container">
-            {topMovies.length === 0 && <p>Carregando...</p>}
-            {topMovies.length > 0 && 
-            topMovies.map((movie) => <MovieCard key={movie.id} movie={movie} />)}
-        </div>
+      <h2 className="title">Melhores filmes:</h2>
+      <div className="movies-container">
+        {status === "loading" && <p>Carregando...</p>}
+        {status === "error" && <p>{errorMessage}</p>}
+        {status === "success" && topMovies.length === 0 && (
+          <p>Nenhum filme encontrado.</p>
+        )}
+        {status === "success" && topMovies.map((movie) => (
+          <MovieCard key={movie.id} movie={movie} />
+        ))}
+      </div>
     </div>
- );
+  );
 };
 
 export default Home;
