@@ -1,46 +1,17 @@
-import { useEffect, useState } from "react";
 import FeedbackPanel from "../components/FeedbackPanel";
 import { MovieGrid, MovieGridSkeleton } from "../components/MovieGrid";
+import { useAsyncData } from "../hooks/useAsyncData";
 import { getTopRatedMovies } from "../services/movies";
 
 import "./Home.css";
 
 const Home = () => {
-  const [topMovies, setTopMovies] = useState([]);
-  const [status, setStatus] = useState("loading");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [requestVersion, setRequestVersion] = useState(0);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    let isCurrentRequest = true;
-
-    setStatus("loading");
-    setErrorMessage("");
-
-    getTopRatedMovies(controller.signal)
-      .then((movies) => {
-        if (!isCurrentRequest) return;
-
-        setTopMovies(movies);
-        setStatus("success");
-      })
-      .catch((error) => {
-        if (!isCurrentRequest || error?.name === "AbortError") return;
-
-        setErrorMessage(error?.message ?? "Não foi possível carregar os filmes.");
-        setStatus("error");
-      });
-
-    return () => {
-      isCurrentRequest = false;
-      controller.abort();
-    };
-  }, [requestVersion]);
-
-  const handleRetry = () => {
-    setRequestVersion((version) => version + 1);
-  };
+  const {
+    data: topMovies,
+    status,
+    errorMessage,
+    retry: handleRetry,
+  } = useAsyncData(getTopRatedMovies, [], { initialData: [] });
 
   const statusMessage = {
     loading: "Carregando filmes mais bem avaliados.",

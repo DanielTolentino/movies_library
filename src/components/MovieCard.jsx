@@ -1,17 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { FaStar } from "react-icons/fa";
 import { BiRightArrowAlt } from "react-icons/bi";
+import MovieRating from "./MovieRating";
 import { getMovieImageUrl } from "../services/movies";
+import { getMovieTitle } from "../utils/movie";
 
 import "./MovieCard.css";
-
-const ratingFormatter = new Intl.NumberFormat("pt-BR", {
-  maximumFractionDigits: 1,
-  minimumFractionDigits: 1,
-});
-
-const getMovieTitle = (movie) => movie.title?.trim() || "Filme sem título";
 
 export const MoviePoster = ({ movie, loading = "lazy", className = "" }) => {
   const imageUrl = getMovieImageUrl(movie.poster_path);
@@ -57,20 +51,13 @@ export const MoviePoster = ({ movie, loading = "lazy", className = "" }) => {
 const MovieCard = ({ movie }) => {
   const title = getMovieTitle(movie);
   const titleId = `movie-title-${movie.id}`;
-  const rating = Number.isFinite(movie.vote_average)
-    ? ratingFormatter.format(movie.vote_average)
-    : "—";
 
   return (
     <article className="movie-card">
       <Link className="movie-card__link" to={`/movie/${movie.id}`} aria-labelledby={titleId}>
         <MoviePoster movie={movie} />
         <div className="movie-card__content">
-          <p className="movie-card__rating" aria-label={`Avaliação ${rating} de 10`}>
-            <FaStar aria-hidden="true" />
-            <span>{rating}</span>
-            <span className="visually-hidden"> de 10</span>
-          </p>
+          <MovieRating className="movie-card__rating" voteAverage={movie.vote_average} />
           <h3 id={titleId}>{title}</h3>
           <span className="movie-card__action">
             Ver detalhes

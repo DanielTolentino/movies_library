@@ -1,59 +1,24 @@
-import { useEffect, useState } from "react";
+import { useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import FeedbackPanel from "../components/FeedbackPanel";
 import { MovieGrid, MovieGridSkeleton } from "../components/MovieGrid";
+import { useAsyncData } from "../hooks/useAsyncData";
 import { searchMovies } from "../services/movies";
 
 import "./Search.css";
 
 const Search = () => {
   const [searchParams] = useSearchParams();
-  const [movies, setMovies] = useState([]);
-  const [status, setStatus] = useState("idle");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [requestVersion, setRequestVersion] = useState(0);
   const query = searchParams.get("q")?.trim() ?? "";
 
-  useEffect(() => {
-    const controller = new AbortController();
-    let isCurrentRequest = true;
+  const fetchMovies = useCallback((signal) => searchMovies(query, signal), [query]);
 
-    if (!query) {
-      setMovies([]);
-      setErrorMessage("");
-      setStatus("idle");
-      return () => {
-        isCurrentRequest = false;
-        controller.abort();
-      };
-    }
-
-    setStatus("loading");
-    setErrorMessage("");
-
-    searchMovies(query, controller.signal)
-      .then((results) => {
-        if (!isCurrentRequest) return;
-
-        setMovies(results);
-        setStatus("success");
-      })
-      .catch((error) => {
-        if (!isCurrentRequest || error?.name === "AbortError") return;
-
-        setErrorMessage(error?.message ?? "Não foi possível carregar os filmes.");
-        setStatus("error");
-      });
-
-    return () => {
-      isCurrentRequest = false;
-      controller.abort();
-    };
-  }, [query, requestVersion]);
-
-  const handleRetry = () => {
-    setRequestVersion((version) => version + 1);
-  };
+  const {
+    data: movies,
+    status,
+    errorMessage,
+    retry: handleRetry,
+  } = useAsyncData(fetchMovies, [fetchMovies], { enabled: Boolean(query), initialData: [] });
 
   const statusMessage = {
     idle: "Digite um título para pesquisar filmes.",

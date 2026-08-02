@@ -23,9 +23,7 @@ const requestMovies = async (action, params = {}, signal) => {
   return data;
 };
 
-export const getTopRatedMovies = async (signal) => {
-  const data = await requestMovies("top-rated", {}, signal);
-
+const toMovieList = (data) => {
   if (!Array.isArray(data?.results)) {
     throw new Error("Não foi possível carregar os filmes.");
   }
@@ -33,15 +31,11 @@ export const getTopRatedMovies = async (signal) => {
   return data.results;
 };
 
-export const searchMovies = async (query, signal) => {
-  const data = await requestMovies("search", { query }, signal);
+export const getTopRatedMovies = async (signal) =>
+  toMovieList(await requestMovies("top-rated", {}, signal));
 
-  if (!Array.isArray(data?.results)) {
-    throw new Error("Não foi possível carregar os filmes.");
-  }
-
-  return data.results;
-};
+export const searchMovies = async (query, signal) =>
+  toMovieList(await requestMovies("search", { query }, signal));
 
 export const getMovieById = async (id, signal) => {
   const data = await requestMovies("details", { id }, signal);
