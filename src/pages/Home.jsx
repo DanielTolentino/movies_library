@@ -28,6 +28,7 @@ const Home = () => {
       .catch((error) => {
         if (!isCurrentRequest || error?.name === "AbortError") return;
 
+        console.error("Falha ao carregar os filmes mais bem avaliados.", error);
         setErrorMessage(error?.message ?? "Não foi possível carregar os filmes.");
         setStatus("error");
       });

@@ -43,14 +43,26 @@ const getMovieEndpoint = (requestUrl) => {
   return { error: "A ação solicitada é inválida." };
 };
 
+const UPSTREAM_ERROR_MESSAGE = "Não foi possível consultar o serviço de filmes.";
+
 export async function GET(request) {
   const apiKey = process.env.TMDB_API_KEY?.trim();
 
   if (!apiKey) {
+    console.error("[api/movies] TMDB_API_KEY ausente ou vazia.");
+
     return json({ message: "O serviço de filmes não está configurado." }, 500);
   }
 
-  const endpoint = getMovieEndpoint(request.url);
+  let endpoint;
+
+  try {
+    endpoint = getMovieEndpoint(request.url);
+  } catch (error) {
+    console.error("[api/movies] URL da requisição inválida.", error);
+
+    return json({ message: "A requisição é inválida." }, 400);
+  }
 
   if (endpoint.error) {
     return json({ message: endpoint.error }, 400);
@@ -72,20 +84,42 @@ export async function GET(request) {
       headers: { Accept: "application/json" },
       signal: controller.signal,
     });
-    const data = await response.json().catch(() => null);
 
     if (!response.ok) {
-      const status = response.status === 404 ? 404 : 502;
-      const message = status === 404
-        ? "Filme não encontrado."
-        : "Não foi possível consultar o serviço de filmes.";
+      console.error(
+        `[api/movies] TMDB respondeu ${response.status} para ${endpoint.path}.`,
+      );
 
-      return json({ message }, status);
+      if (response.status === 404) {
+        return json({ message: "Filme não encontrado." }, 404);
+      }
+
+      return json({ message: UPSTREAM_ERROR_MESSAGE }, 502);
+    }
+
+    let data;
+
+    try {
+      data = await response.json();
+    } catch (error) {
+      console.error("[api/movies] Resposta do TMDB não é um JSON válido.", error);
+
+      return json({ message: UPSTREAM_ERROR_MESSAGE }, 502);
     }
 
     return json(data);
-  } catch {
-    return json({ message: "Não foi possível consultar o serviço de filmes." }, 502);
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      console.error(
+        `[api/movies] TMDB excedeu o tempo limite de ${REQUEST_TIMEOUT_MS}ms para ${endpoint.path}.`,
+      );
+
+      return json({ message: "O serviço de filmes demorou para responder." }, 504);
+    }
+
+    console.error(`[api/movies] Falha ao consultar o TMDB para ${endpoint.path}.`, error);
+
+    return json({ message: UPSTREAM_ERROR_MESSAGE }, 502);
   } finally {
     clearTimeout(timeout);
   }

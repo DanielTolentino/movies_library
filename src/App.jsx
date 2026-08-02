@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 
+import ErrorBoundary from "./components/ErrorBoundary";
 import Navbar from "./components/Navbar";
 
 function App() {
@@ -10,7 +11,9 @@ function App() {
       </a>
       <Navbar />
       <main id="main-content" className="app-main" tabIndex="-1">
-        <Outlet />
+        <ErrorBoundary>
+          <Outlet />
+        </ErrorBoundary>
       </main>
     </div>
   );

@@ -62,6 +62,7 @@ const Movie = () => {
       .catch((error) => {
         if (!isCurrentRequest || error?.name === "AbortError") return;
 
+        console.error(`Falha ao carregar os detalhes do filme ${id}.`, error);
         setErrorMessage(error?.message ?? "Não foi possível carregar o filme.");
         setStatus("error");
       });
