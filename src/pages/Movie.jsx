@@ -8,41 +8,52 @@ import {
 } from "react-icons/bs";
 
 import MovieCard from "../components/MovieCard";
+import { getMovieById } from "../services/movies";
 
 import "./Movie.css";
 
-const moviesURL = import.meta.env.VITE_API;
-const apiKey = import.meta.env.VITE_API_KEY;
-
 const Movie = () => {
-    const {id} = useParams();
-    const [movie, setMovie] = useState(null)
+  const { id } = useParams();
+  const [movie, setMovie] = useState(null);
+  const [status, setStatus] = useState("loading");
+  const [errorMessage, setErrorMessage] = useState("");
 
-    const getMovie = async (url) => {
-      const res = await fetch(url);
-      const data = await res.json();
-      console.log(data);
-      setMovie(data);
-    };
+  const formatCurrency = (number) => {
+    if (typeof number !== "number") return "Não informado";
 
-    const formatCurrency = (number) => {
-      return number.toLocaleString("en-US", {
-        style: "currency",
-        currency: "USD",
+    return number.toLocaleString("en-US", {
+      style: "currency",
+      currency: "USD",
+    });
+  };
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    setMovie(null);
+    setErrorMessage("");
+    setStatus("loading");
+
+    getMovieById(id, controller.signal)
+      .then((movieData) => {
+        setMovie(movieData);
+        setStatus("success");
+      })
+      .catch((error) => {
+        if (error?.name === "AbortError") return;
+
+        setErrorMessage(error.message);
+        setStatus("error");
       });
-    };
 
-    useEffect(() => {
-      const movieUrl = `${moviesURL}${id}?api_key=${apiKey}`;
-      getMovie(movieUrl)
-    }, [])
-
-
-
+    return () => controller.abort();
+  }, [id]);
 
   return (
     <div className="movie-page">
-      {movie && (
+      {status === "loading" && <p>Carregando...</p>}
+      {status === "error" && <p>{errorMessage}</p>}
+      {status === "success" && movie && (
         <>
           <MovieCard movie={movie} showLink={false} />
           <p className="tagline">{movie.tagline}</p>
@@ -62,18 +73,18 @@ const Movie = () => {
             <h3>
               <BsHourglassSplit /> Duração:
             </h3>
-            <p>{movie.runtime}</p>
+            <p>{movie.runtime ?? "Não informado"}</p>
           </div>
           <div className="info description">
             <h3>
               <BsFillFileEarmarkTextFill /> Descrição:
             </h3>
-            <p>{movie.overview}</p>
+            <p>{movie.overview || "Descrição não informada."}</p>
           </div>
-          </>
+        </>
       )}
     </div>
   );
 };
-  
-  export default Movie;
+
+export default Movie;

@@ -1,44 +1,63 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import MovieCard from "../components/MovieCard";
-
-const searchURL = import.meta.env.VITE_SEARCH
-const apiKey = import.meta.env.VITE_API_KEY
+import { searchMovies } from "../services/movies";
 
 import "./MoviesGrid.css";
 
 const Search = () => {
-
   const [searchParams] = useSearchParams();
-
   const [movies, setMovies] = useState([]);
-  const query = searchParams.get("q");
+  const [status, setStatus] = useState("idle");
+  const [errorMessage, setErrorMessage] = useState("");
+  const query = searchParams.get("q")?.trim() ?? "";
 
-  const getSearchedMovies = async (url) => {
-    const res = await fetch(url);
-    const data = await res.json();
-    
-    setMovies(data.results);
-};
+  useEffect(() => {
+    const controller = new AbortController();
 
-useEffect(() => {
+    if (!query) {
+      setMovies([]);
+      setErrorMessage("");
+      setStatus("idle");
+      return () => controller.abort();
+    }
 
-    const searchWithQueryURL = `${searchURL}movie?query=${query}&api_key=${apiKey}`;
+    setStatus("loading");
+    setErrorMessage("");
 
-    getSearchedMovies(searchWithQueryURL);
-}, [query]);
+    searchMovies(query, controller.signal)
+      .then((results) => {
+        setMovies(results);
+        setStatus("success");
+      })
+      .catch((error) => {
+        if (error?.name === "AbortError") return;
 
-  return(
+        setErrorMessage(error.message);
+        setStatus("error");
+      });
+
+    return () => controller.abort();
+  }, [query]);
+
+  return (
     <div className="container">
-    <h2 className="title">
-      Resultados para: <span className="query-text">{query}</span>
+      <h2 className="title">
+        Resultados para: <span className="query-text">{query}</span>
       </h2>
       <div className="movies-container">
-        {movies.length > 0 &&
-          movies.map((movie) => <MovieCard key={movie.id} movie={movie} />)}
+        {status === "idle" && <p>Digite um filme para iniciar a busca.</p>}
+        {status === "loading" && <p>Carregando...</p>}
+        {status === "error" && <p>{errorMessage}</p>}
+        {status === "success" && movies.length === 0 && (
+          <p>Nenhum filme encontrado.</p>
+        )}
+        {status === "success" && movies.map((movie) => (
+          <MovieCard key={movie.id} movie={movie} />
+        ))}
       </div>
-  </div>
-)
-  };
-  
-  export default Search;
+    </div>
+  );
+};
+
+export default Search;
